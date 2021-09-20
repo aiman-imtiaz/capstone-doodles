@@ -15,7 +15,7 @@ pluginPass modGuts = do
   printDots binds
   putMsgS "Hello! from plugin pass"
   return modGuts
-  
+
 printDotBindExpr :: CoreExpr -> CoreM ()
 printDotBindExpr (Var id) = do
   putMsgS "."
@@ -47,7 +47,7 @@ printDotBindExpr (Type t) = do
 printDotBindExpr (Coercion coercion) = do
   putMsgS "."
   return ()
-  
+
 printDotsBind :: CoreBind -> CoreM ()
 printDotsBind (NonRec b e) = do
   printDotBindExpr e
@@ -63,7 +63,7 @@ printDots (b : t) = do
   printDots t
 printDots [] = do
   return ()
-  
+
 
 install :: [CommandLineOption] -> [CoreToDo] -> CoreM [CoreToDo]
 install _ todo = do
