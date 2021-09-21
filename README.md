@@ -1,4 +1,4 @@
 # plugin
 ```
-stack build && stack ghc -- -fplugin=Ghc_cfa /Users/aimanimtiaz/main.hs
+stack build && stack ghc -- -fplugin=Ghc_cfa <file to be compiled>
 ```
