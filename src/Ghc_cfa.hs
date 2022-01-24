@@ -1,10 +1,60 @@
 module Ghc_cfa (plugin) where
 import GhcPlugins
+import Data.Map (Map)
+import qualified Data.Map as Map
+
+type Address = String
+type Env = Map Id Address
+type VStore = Map Address Value
+type KAddress = String
+type KStore = Map KAddress Continuation
+
+data Configuration = In CoreExpr Env VStore KAddress KStore| Out Value VStore KAddress KStore
+
+data Continuation = AnyCnt | Arg CoreExpr Env KAddress | Fn Value Env KAddress
+data Value = AnyValue | Closure Id CoreExpr Env
+defaultAddr = error "defaultAddr"
 
 plugin :: Plugin
 plugin = defaultPlugin {
   installCoreToDos = install
   }
+  
+allocK :: Configuration -> KAddress
+allocK c = error "AllocK"
+
+allocV :: Configuration -> KAddress
+allocV c = error "AllocV"
+  
+eval :: Configuration -> [Configuration]
+eval (In (Var id) e s k ks) =
+  let value = Map.findWithDefault AnyValue (Map.findWithDefault defaultAddr id e) s
+  in [Out value s k ks]
+eval (In (Lam b exprB) env s k ks) =
+  let closure = Closure b exprB env
+  in [Out closure s k ks]
+eval c@(In (App exprB argb) env s k ks) =
+  let a = allocK c
+      ks' = Map.insert a (Arg argb env k) ks
+  in [In exprB env s a ks']
+eval c@(Out value s k ks) =
+  let k' = Map.findWithDefault AnyCnt k ks in
+    case k' of 
+      AnyCnt -> [Out value s k ks]
+      Arg e env kAddress -> 
+        let k'' = Fn value env kAddress
+            a = allocK c
+            ks' = Map.insert a (k'') ks
+        in [In e env s a ks']  
+      Fn value env b ->
+        case value of
+          AnyValue -> [Out AnyValue s k ks]
+          Closure id expr env ->
+            let b' = allocV c
+                env' = Map.insert id b' env
+                s' = Map.insert b' expr  s
+            in
+              [In expr env' s' b ks]
 
 
 pluginPass :: ModGuts -> CoreM ModGuts
@@ -23,7 +73,7 @@ printDotBindExpr (Var id) = do
 printDotBindExpr (Lit literal) = do
   putMsgS "."
   return ()
-printDotBindExpr (App exprb argb) = do
+printDotBindExpr (App exprB argb) = do
   putMsgS "."
   return ()
 printDotBindExpr (Lam b exprB) = do
