@@ -26,6 +26,7 @@ source-repository head
 library
   exposed-modules:
       Ghc_cfa
+      Test
   other-modules:
       Paths_plugin
   hs-source-dirs:
